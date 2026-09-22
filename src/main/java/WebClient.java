@@ -11,30 +11,31 @@ import java.util.stream.Collectors;
 public class WebClient {
 
     private final Map<String, RemoteService> services;
-    private final int failureThreshold;
-    private final long failureWindowMillis;
-    private final long openDurationMillis;
 
     public WebClient(List<RemoteService> services,
-                     int failureThreshold,
-                     long failureWindowMillis,
-                     long openDurationMillis) {
+            int failureThreshold,
+            long failureWindowMillis,
+            long openDurationMillis) {
+
+        BreakerConfig config = new BreakerConfig(failureThreshold, failureWindowMillis, openDurationMillis);
         this.services = services.stream()
+                .map(s -> new CircuitBreakerRemoteService(s, config))
                 .collect(Collectors.toMap(RemoteService::name, Function.identity()));
-        this.failureThreshold = failureThreshold;
-        this.failureWindowMillis = failureWindowMillis;
-        this.openDurationMillis = openDurationMillis;
     }
 
     /**
      * Sends the request to the service named by {@link Request#serviceName()}.
      *
      * @return the downstream response
-     * @throws CircuitOpenException   if the service is currently considered unhealthy
+     * @throws CircuitOpenException   if the service is currently considered
+     *                                unhealthy
      * @throws RemoteServiceException if the downstream call fails
      */
     public Response execute(Request request) {
-        // TODO: implement
-        throw new UnsupportedOperationException("execute is not implemented yet");
+        if (!services.containsKey(request.serviceName())) {
+            throw new UnsupportedOperationException("execute is not implemented yet");
+        }
+
+        return services.get(request.serviceName()).call(request);
     }
 }

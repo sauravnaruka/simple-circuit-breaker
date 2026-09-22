@@ -88,14 +88,42 @@ Then discuss (no code needed):
 
 ## How to run
 
-```bash
-cd simple-circuit-breaker
-javac *.java && java Main
-```
-
-No build tool, no dependencies. Java 17+.
+Java 17+. Sources live in `src/main/java/`.
 
 `Main` runs five scenarios and prints PASS/FAIL for each. It uses real sleeps, so a full run takes about 10 seconds.
+
+### Option A — plain `javac` / `java` (no build tool)
+
+```bash
+cd simple-circuit-breaker
+javac -d out src/main/java/*.java && java -cp out Main
+```
+
+`-d out` writes the compiled `.class` files to `out/`; `-cp out` tells `java` to load them from there.
+
+### Option B — Maven
+
+```bash
+cd simple-circuit-breaker
+mvn -q compile exec:java
+```
+
+`compile` builds into `target/classes/`; `exec:java` runs `Main` (the main class is set in `pom.xml` via `exec.mainClass`). `-q` hides Maven's `[INFO]` output so the PASS/FAIL lines are easy to read — drop it if the build fails and you need the details.
+
+Useful variants:
+
+```bash
+mvn -q compile        # just check that it compiles
+mvn -q clean compile exec:java   # start from a clean build
+```
+
+### Running tests
+
+The scenarios in `Main` are the acceptance check for this exercise. The pom also includes JUnit 5 and Surefire, so if you add unit tests under `src/test/java/`, run them with:
+
+```bash
+mvn test
+```
 
 ## Files
 
@@ -118,3 +146,7 @@ You may add new classes/files — a separate breaker or failure-window type is a
 3. Would a new requirement (a different trip rule) touch one class or many?
 4. Did I name things after the domain, or after the data structure?
 5. Did I run it, or just eyeball it?
+
+## TODO
+1. Handle http service 
+2. Implement half open state
