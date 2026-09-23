@@ -34,7 +34,7 @@ You have been given a small skeleton. **Implement `WebClient.execute(Request)`.*
 - What should happen to in-flight calls?
 - Is `execute` called concurrently?
 
-Run the scenarios: see "How to run" below. All five must pass.
+Run the tests: see "How to run" below. Everything under `Part 1` must pass.
 
 ---
 
@@ -88,41 +88,23 @@ Then discuss (no code needed):
 
 ## How to run
 
-Java 17+. Sources live in `src/main/java/`.
+Java 17+. Sources live in `src/main/java/`, tests in `src/test/java/`.
 
-`Main` runs five scenarios and prints PASS/FAIL for each. It uses real sleeps, so a full run takes about 10 seconds.
-
-### Option A — plain `javac` / `java` (no build tool)
+The JUnit suite is the acceptance check for this exercise:
 
 ```bash
 cd simple-circuit-breaker
-javac -d out src/main/java/*.java && java -cp out Main
+mvn test
 ```
 
-`-d out` writes the compiled `.class` files to `out/`; `-cp out` tells `java` to load them from there.
-
-### Option B — Maven
-
-```bash
-cd simple-circuit-breaker
-mvn -q compile exec:java
-```
-
-`compile` builds into `target/classes/`; `exec:java` runs `Main` (the main class is set in `pom.xml` via `exec.mainClass`). `-q` hides Maven's `[INFO]` output so the PASS/FAIL lines are easy to read — drop it if the build fails and you need the details.
+It is grouped to match this brief — `Part 1` and `Part 2` map to the sections above — and it drives a hand-moved `Clock` rather than sleeping, so the whole suite runs in well under a second and never flakes on a loaded machine.
 
 Useful variants:
 
 ```bash
-mvn -q compile        # just check that it compiles
-mvn -q clean compile exec:java   # start from a clean build
-```
-
-### Running tests
-
-The scenarios in `Main` are the acceptance check for this exercise. The pom also includes JUnit 5 and Surefire, so if you add unit tests under `src/test/java/`, run them with:
-
-```bash
-mvn test
+mvn -q compile                       # just check that it compiles
+mvn test -Dtest='WebClientTest$Part1'   # one part only
+mvn clean test                       # start from a clean build
 ```
 
 ## Files
@@ -133,7 +115,9 @@ mvn test
 | `RemoteService.java`, `FlakyRemoteService.java` | Simulated downstream. Tracks how many calls actually reached it. |
 | `Request.java`, `Response.java` | Value types. |
 | `RemoteServiceException.java`, `CircuitOpenException.java` | Failure signals. |
-| `Main.java` | Scenario runner. Read it if a scenario fails, but do not weaken it. |
+| `src/test/java/WebClientTest.java` | Acceptance tests, grouped by part. Read it if one fails, but do not weaken it. |
+| `src/test/java/MutableClock.java` | Test clock, moved by hand instead of sleeping. |
+| `src/test/java/ScriptedRemoteService.java` | Downstream double whose next outcome the test picks. |
 
 You may add new classes/files — a separate breaker or failure-window type is a reasonable design.
 

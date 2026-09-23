@@ -1,3 +1,4 @@
+import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -17,9 +18,18 @@ public class WebClient {
             long failureWindowMillis,
             long openDurationMillis) {
 
+        this(services, failureThreshold, failureWindowMillis, openDurationMillis, Clock.systemUTC());
+    }
+
+    public WebClient(List<RemoteService> services,
+            int failureThreshold,
+            long failureWindowMillis,
+            long openDurationMillis,
+            Clock clock) {
+
         BreakerConfig config = new BreakerConfig(failureThreshold, failureWindowMillis, openDurationMillis);
         this.services = services.stream()
-                .map(s -> new CircuitBreakerRemoteService(s, config))
+                .map(s -> new CircuitBreakerRemoteService(s, config, clock))
                 .collect(Collectors.toMap(RemoteService::name, Function.identity()));
     }
 
