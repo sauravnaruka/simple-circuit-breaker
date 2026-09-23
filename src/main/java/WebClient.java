@@ -32,10 +32,11 @@ public class WebClient {
      * @throws RemoteServiceException if the downstream call fails
      */
     public Response execute(Request request) {
-        if (!services.containsKey(request.serviceName())) {
-            throw new UnsupportedOperationException("execute is not implemented yet");
+        RemoteService service = services.get(request.serviceName());
+        if (service == null) {
+            throw new IllegalArgumentException("Unknown service: " + request.serviceName());
         }
 
-        return services.get(request.serviceName()).call(request);
+        return service.call(request);
     }
 }
