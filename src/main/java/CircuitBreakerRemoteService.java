@@ -17,7 +17,6 @@ public class CircuitBreakerRemoteService implements RemoteService {
         COOLDOWN_EXPIRED,
         PROBE_SUCCESS,
         PROBE_FAILURE,
-        PROBE_IGNORED
     }
 
     private final RemoteService service;
@@ -50,8 +49,6 @@ public class CircuitBreakerRemoteService implements RemoteService {
                     "Service " + name() + " is unavailable. Retry after " + getRemainingCoolDownTime() + " ms");
         }
 
-        boolean isProbe = (state == CircuitState.HALF_OPEN);
-
         try {
             Response response = service.call(request);
             recordSuccess();
@@ -59,11 +56,8 @@ public class CircuitBreakerRemoteService implements RemoteService {
         } catch (RemoteServiceException ex) {
             recordFailure();
             throw ex;
-        } catch (RuntimeException ex) {
-            if (isProbe) {
-                transition(CircuitEvent.PROBE_IGNORED);
-            }
-            throw ex;
+        } finally {
+            halfOpenProbeInProgress.set(false);
         }
     }
 
@@ -158,7 +152,6 @@ public class CircuitBreakerRemoteService implements RemoteService {
             }
 
             case HALF_OPEN -> {
-                halfOpenProbeInProgress.set(false);
                 if (event == CircuitEvent.PROBE_SUCCESS) {
                     state = CircuitState.CLOSED;
                     circuitOpenTime = null;
@@ -166,9 +159,6 @@ public class CircuitBreakerRemoteService implements RemoteService {
                     state = CircuitState.OPEN;
                     circuitOpenTime = clock.instant();
                 }
-
-                // PROBE_IGNORED: permit released, stay HALF_OPEN for the next probe
-
             }
 
         }
