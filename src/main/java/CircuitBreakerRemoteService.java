@@ -16,7 +16,8 @@ public class CircuitBreakerRemoteService implements RemoteService {
         FAILURE_THRESHOLD_REACHED,
         COOLDOWN_EXPIRED,
         PROBE_SUCCESS,
-        PROBE_FAILURE
+        PROBE_FAILURE,
+        PROBE_IGNORED
     }
 
     private final RemoteService service;
@@ -60,7 +61,7 @@ public class CircuitBreakerRemoteService implements RemoteService {
             throw ex;
         } catch (RuntimeException ex) {
             if (isProbe) {
-                transition(CircuitEvent.PROBE_FAILURE);
+                transition(CircuitEvent.PROBE_IGNORED);
             }
             throw ex;
         }
@@ -165,6 +166,9 @@ public class CircuitBreakerRemoteService implements RemoteService {
                     state = CircuitState.OPEN;
                     circuitOpenTime = clock.instant();
                 }
+
+                // PROBE_IGNORED: permit released, stay HALF_OPEN for the next probe
+
             }
 
         }
